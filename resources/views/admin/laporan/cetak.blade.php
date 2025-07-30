@@ -68,7 +68,7 @@
                 <h5 class="mb-0 fw-bold text-uppercase">Toko Fantasi Smartphone</h5>
                 <h6 class="mb-0 text-uppercase">Sistem Pendukung Keputusan Prioritas Persediaan Smartphone</h6>
                 <p class="mb-0">
-        
+
                     Kota Padang , Sumatera Barat
                 </p>
             </div>
@@ -114,18 +114,49 @@
                     @endforelse
                 </tbody>
             </table>
+
+            @php
+                // Ambil 5 ranking teratas
+                $top5 = collect($preferensi)->take(5);
+            @endphp
+
+            @if ($top5->isNotEmpty())
+                <div class="mt-4">
+                    <h6 class="fw-bold">Kesimpulan</h6>
+                    <p class="text-justify">
+                        Berdasarkan hasil perhitungan menggunakan metode <strong>TOPSIS</strong> pada
+                        <strong>Toko Fantasi Smartphone</strong>, diperoleh urutan prioritas smartphone
+                        yang direkomendasikan untuk persediaan dari yang paling diprioritaskan sebagai berikut:
+                        @foreach ($top5 as $id => $nilai)
+                            @php
+                                $alternatif = $alternatifs->firstWhere('id', $id);
+                            @endphp
+                            <br>
+                            {{ $loop->iteration }}. <strong>{{ $alternatif->nama_smartphone }}</strong>
+                            ({{ $alternatif->kode_produk }})
+                            dengan nilai preferensi
+                            <strong>{{ number_format($nilai, 4) }}</strong>.
+                        @endforeach
+                    </p>
+                </div>
+            @endif
         </div>
+
+
 
         <!-- Tanda Tangan -->
         <div class="row signature-block">
             <div class="col-6"></div>
             <div class="col-6 text-end">
-                <p class="mb-1">{{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}</p>
+                <p class="mb-1">
+                    {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('l, d F Y') }}
+                </p>
                 <p class="mb-5">Pimpinan</p>
-                <p class="fw-bold text-uppercase mb-1"></p>
-                <p class="mb-0">NIP: 19720304 199601 1 003</p>
+                <p class="fw-bold text-uppercase mb-1">Tjahjono</p>
             </div>
         </div>
+
+
 
     </div>
 

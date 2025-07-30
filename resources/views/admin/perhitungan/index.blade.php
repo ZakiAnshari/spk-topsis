@@ -359,41 +359,7 @@
                                 </table>
 
                                 {{-- Kesimpulan --}}
-                                @if ($totalPenilaian > 0 && $dataPreferensi->isNotEmpty())
-                                    @php
-                                        // Ambil ID peringkat pertama
-                                        $idTeratas = $dataPreferensi->keys()->first();
-                                        $alternatifTeratas = $alternatifs->firstWhere('id', $idTeratas);
-                                    @endphp
-                                    <br>
-                                    <div class="col-12 col-lg-12">
-                                        <div class="p-4 border rounded bg-light shadow-sm mx-auto"
-                                            style="max-width: 800px;">
-                                            <h5 class="fw-bold mb-4 text-center">Kesimpulan</h5>
-
-                                            <div class="mb-3 row">
-                                                <label class="col-sm-4 col-form-label fw-bold">
-                                                    Smartphone Prioritas Tertinggi
-                                                </label>
-                                                <div class="col-sm-8 d-flex align-items-center">
-                                                    <span class="form-control-plaintext">
-                                                        {{ $alternatifTeratas->nama_smartphone }}
-                                                        ({{ $alternatifTeratas->kode_produk }})
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div class="mb-3 row">
-                                                <label class="col-sm-4 col-form-label fw-bold">Nilai Preferensi</label>
-                                                <div class="col-sm-8 d-flex align-items-center">
-                                                    <span class="form-control-plaintext">
-                                                        {{ number_format($preferensi[$idTeratas], 4) }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
+                              
                             </div>
                         </div>
                     </div>
