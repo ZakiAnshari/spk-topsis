@@ -11,26 +11,30 @@ class AlternatifMerekhp extends Controller
     public function index(Request $request)
     {
         // Ambil input keyword pencarian dan jumlah item per halaman
-        $nama = $request->input('search'); // bisa nama atau NIK
+        $keyword = $request->input('search'); // keyword pencarian
         $paginate = $request->input('itemsPerPage', 5); // default 5 item per halaman
 
         // Mulai query
         $query = Alternatif::query();
 
         // Jika ada keyword pencarian
-        if (!empty($nama)) {
-            $query->where(function ($q) use ($nama) {
-                $q->where('nama', 'like', '%' . $nama . '%')
-                    ->orWhere('nik', 'like', '%' . $nama . '%');
+        if (!empty($keyword)) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('nama_smartphone', 'like', '%' . $keyword . '%')
+                    ->orWhere('kode_produk', 'like', '%' . $keyword . '%');
             });
         }
 
         // Eksekusi query dengan paginasi
         $alternatifs = $query->paginate($paginate);
 
+        // Simpan query string agar pagination tetap membawa parameter search
+        $alternatifs->appends(['search' => $keyword, 'itemsPerPage' => $paginate]);
+
         // Kirim data ke view
-        return view('admin.alternatif.index', compact('alternatifs', 'nama'));
+        return view('admin.alternatif.index', compact('alternatifs', 'keyword'));
     }
+
 
     public function store(Request $request)
     {

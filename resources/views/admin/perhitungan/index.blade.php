@@ -123,7 +123,6 @@
                     </div>
                 </div>
 
-
                 <div class="col-lg-12 mb-3">
                     <div class="card">
                         <div class="card-body">
@@ -149,22 +148,35 @@
                                             @foreach ($kriterias as $kriteria)
                                                 <th>({{ $kriteria->kode }})</th>
                                             @endforeach
-
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @php $no = 1; @endphp
                                         @foreach ($alternatifs as $item)
-                                            <tr>
-                                                <td>{{ $no++ }}</td>
-                                                <td>{{ $item->nama_smartphone }}</td>
+                                            @php
+                                                // Ambil penilaian untuk alternatif ini
+                                                $penilaianAlternatif = $penilaians->where('alternatif_id', $item->id);
 
-                                                @foreach ($kriterias as $kriteria)
-                                                    <td>
-                                                        {{ number_format($normalisasi[$item->id][$kriteria->id] ?? 0, 4) }}
-                                                    </td>
-                                                @endforeach
-                                            </tr>
+                                                // Cek kelengkapan penilaian
+                                                $lengkap =
+                                                    $penilaianAlternatif
+                                                        ->pluck('subkriteria.kriteria_id')
+                                                        ->unique()
+                                                        ->count() === $kriterias->count();
+                                            @endphp
+
+                                            @if ($lengkap && isset($normalisasi[$item->id]))
+                                                <tr>
+                                                    <td>{{ $no++ }}</td>
+                                                    <td>{{ $item->nama_smartphone }}</td>
+
+                                                    @foreach ($kriterias as $kriteria)
+                                                        <td>
+                                                            {{ number_format($normalisasi[$item->id][$kriteria->id] ?? 0, 4) }}
+                                                        </td>
+                                                    @endforeach
+                                                </tr>
+                                            @endif
                                         @endforeach
 
                                         @if ($no === 1)
@@ -174,41 +186,111 @@
                                             </tr>
                                         @endif
                                     </tbody>
-
                                 </table>
                             </div>
-
                         </div>
                     </div>
                 </div>
+
 
                 <div class="col-lg-12 mb-3">
                     <div class="card">
                         <div class="card-body">
                             <h5 class="pb-2 border-bottom">Solusi Ideal Positif dan Negatif</h5>
+
                             <div class="table-responsive text-nowrap">
-                                <table class="table table-bordered">
+                                <table class="table table-hover table-bordered align-middle text-nowrap mb-0">
                                     <thead class="table-primary text-center">
                                         <tr>
-                                            <th>Jenis Solusi</th>
+                                            <th style="width: 150px">Jenis Solusi</th>
                                             @foreach ($kriterias as $kriteria)
                                                 <th>{{ $kriteria->kode }}</th>
                                             @endforeach
                                         </tr>
                                     </thead>
                                     <tbody class="text-center">
+                                        @php
+                                            // Cek apakah ada data nyata di database
+                                            $adaData =
+                                                isset($solusiPositif, $solusiNegatif) &&
+                                                $kriterias->count() > 0 &&
+                                                !empty(array_filter($solusiPositif)) &&
+                                                !empty(array_filter($solusiNegatif));
+                                        @endphp
+
+                                        @if ($adaData)
+                                            <tr>
+                                                <td><strong>Positif (+)</strong></td>
+                                                @foreach ($kriterias as $kriteria)
+                                                    <td>
+                                                        {{ isset($solusiPositif[$kriteria->id]) ? number_format($solusiPositif[$kriteria->id], 4) : '' }}
+                                                    </td>
+                                                @endforeach
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Negatif (−)</strong></td>
+                                                @foreach ($kriterias as $kriteria)
+                                                    <td>
+                                                        {{ isset($solusiNegatif[$kriteria->id]) ? number_format($solusiNegatif[$kriteria->id], 4) : '' }}
+                                                    </td>
+                                                @endforeach
+                                            </tr>
+                                        @else
+                                            <tr>
+                                                <td colspan="{{ 1 + $kriterias->count() }}" class="text-center">Data Kosong
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="col-lg-12 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="pb-2 border-bottom">Jarak ke Solusi Ideal Positif (Si⁺)</h5>
+
+                            <div class="table-responsive text-nowrap">
+                                <table class="table table-hover table-bordered align-middle text-nowrap mb-0">
+                                    <thead class="table-primary text-center">
                                         <tr>
-                                            <td><strong>Positif (+)</strong></td>
-                                            @foreach ($kriterias as $kriteria)
-                                                <td>{{ number_format($solusiPositif[$kriteria->id] ?? 0, 4) }}</td>
-                                            @endforeach
+                                            <th style="width: 120px;">Kode Produk</th>
+                                            <th>Nama Smartphone</th>
+                                            <th>Si⁺</th>
                                         </tr>
-                                        <tr>
-                                            <td><strong>Negatif (−)</strong></td>
-                                            @foreach ($kriterias as $kriteria)
-                                                <td>{{ number_format($solusiNegatif[$kriteria->id] ?? 0, 4) }}</td>
+                                    </thead>
+                                    <tbody class="text-center">
+                                        @php
+                                            // Ambil semua penilaian dari database
+                                            $totalPenilaian = \App\Models\Penilaian::count();
+
+                                            // Filter alternatif yang benar-benar punya nilai Si+
+                                            $dataSiPlus = collect($alternatifs)->filter(function ($alt) use (
+                                                $jarakPositif,
+                                            ) {
+                                                return isset($jarakPositif[$alt->id]) &&
+                                                    $jarakPositif[$alt->id] !== null;
+                                            });
+                                        @endphp
+
+                                        @if ($totalPenilaian > 0 && $dataSiPlus->isNotEmpty())
+                                            @foreach ($dataSiPlus as $alternatif)
+                                                <tr>
+                                                    <td>{{ $alternatif->kode_produk }}</td>
+                                                    <td>{{ $alternatif->nama_smartphone }}</td>
+                                                    <td>{{ number_format($jarakPositif[$alternatif->id], 4) }}</td>
+                                                </tr>
                                             @endforeach
-                                        </tr>
+                                        @else
+                                            <tr>
+                                                <td colspan="3" class="text-center">Data Kosong</td>
+                                            </tr>
+                                        @endif
                                     </tbody>
                                 </table>
                             </div>
@@ -216,53 +298,31 @@
                     </div>
                 </div>
 
-                <div class="col-lg-12 mb-3">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="pb-2 border-bottom">Jarak ke Solusi Ideal Positif (Si⁺)</h5>
-                            <div class="table-responsive text-nowrap">
-                                <table class="table table-bordered">
-                                    <thead class="table-primary text-center">
-                                        <tr>
-                                            <th>Kode Produk</th>
-                                            <th>Nama</th>
-                                            <th>Si⁺</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="text-center">
-                                        @foreach ($alternatifs as $alternatif)
-                                            <tr>
-                                                <td>{{ $alternatif->kode_produk }}</td>
-                                                <td>{{ $alternatif->nama_smartphone }}</td>
-                                                <td>{{ number_format($jarakPositif[$alternatif->id] ?? 0, 4) }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
 
                 {{-- //NILAI PREFERENSI --}}
                 <div class="col-lg-12 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="pb-2 border-bottom">Hasil Akhir : Si⁺, Si⁻, Nilai Preferensi (V<sub>i</sub>), dan
-                                Ranking</h5>
+                            <h5 class="pb-2 border-bottom">
+                                Hasil Akhir : Si⁺, Si⁻, Nilai Preferensi (V<sub>i</sub>), dan Ranking
+                            </h5>
+
                             <div class="table-responsive text-nowrap">
-                                <div class="d-flex justify-content-end align-items-center">
-
-                                    <!-- Tombol Aksi -->
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-
-                                        <a href="{{ route('laporan.cetak') }}" class="btn btn-warning d-flex align-items-center" role="button"
-                                            target="_blank">
-                                            <i class="bx bx-printer me-1"></i> Cetak
-                                        </a>
-                                    </div>
+                                <div class="d-flex justify-content-end align-items-center mb-3">
+                                    <a href="{{ route('laporan.cetak') }}"
+                                        class="btn btn-warning d-flex align-items-center" role="button" target="_blank">
+                                        <i class="bx bx-printer me-1"></i> Cetak
+                                    </a>
                                 </div>
+
+                                @php
+                                    // Cek apakah ada data penilaian di database
+                                    $totalPenilaian = \App\Models\Penilaian::count();
+                                    // Filter preferensi yang valid (tidak kosong/null)
+                                    $dataPreferensi = collect($preferensi ?? [])->filter(fn($val) => !is_null($val));
+                                @endphp
+
                                 <table class="table table-bordered">
                                     <thead class="table-primary text-center">
                                         <tr>
@@ -275,28 +335,70 @@
                                         </tr>
                                     </thead>
                                     <tbody class="text-center">
-                                        @php
-                                            $ranking = 1;
-                                        @endphp
-                                        @foreach ($preferensi as $id => $nilaiPreferensi)
-                                            @php
-                                                $alternatif = $alternatifs->firstWhere('id', $id);
-                                            @endphp
+                                        @if ($totalPenilaian > 0 && $dataPreferensi->isNotEmpty())
+                                            @php $ranking = 1; @endphp
+                                            @foreach ($dataPreferensi as $id => $nilaiPreferensi)
+                                                @php
+                                                    $alternatif = $alternatifs->firstWhere('id', $id);
+                                                @endphp
+                                                <tr>
+                                                    <td>{{ $ranking++ }}</td>
+                                                    <td>{{ $alternatif->kode_produk }}</td>
+                                                    <td>{{ $alternatif->nama_smartphone }}</td>
+                                                    <td>{{ number_format($jarakPositif[$id] ?? 0, 4) }}</td>
+                                                    <td>{{ number_format($jarakNegatif[$id] ?? 0, 4) }}</td>
+                                                    <td><strong>{{ number_format($nilaiPreferensi, 4) }}</strong></td>
+                                                </tr>
+                                            @endforeach
+                                        @else
                                             <tr>
-                                                <td>{{ $ranking++ }}</td>
-                                                <td>{{ $alternatif->kode_produk }}</td>
-                                                <td>{{ $alternatif->nama_smartphone }}</td>
-                                                <td>{{ number_format($jarakPositif[$id] ?? 0, 4) }}</td>
-                                                <td>{{ number_format($jarakNegatif[$id] ?? 0, 4) }}</td>
-                                                <td><strong>{{ number_format($nilaiPreferensi, 4) }}</strong></td>
+                                                <td colspan="6" class="text-center">Data Kosong</td>
                                             </tr>
-                                        @endforeach
+                                        @endif
                                     </tbody>
                                 </table>
+
+                                {{-- Kesimpulan --}}
+                                @if ($totalPenilaian > 0 && $dataPreferensi->isNotEmpty())
+                                    @php
+                                        // Ambil ID peringkat pertama
+                                        $idTeratas = $dataPreferensi->keys()->first();
+                                        $alternatifTeratas = $alternatifs->firstWhere('id', $idTeratas);
+                                    @endphp
+                                    <br>
+                                    <div class="col-12 col-lg-12">
+                                        <div class="p-4 border rounded bg-light shadow-sm mx-auto"
+                                            style="max-width: 800px;">
+                                            <h5 class="fw-bold mb-4 text-center">Kesimpulan</h5>
+
+                                            <div class="mb-3 row">
+                                                <label class="col-sm-4 col-form-label fw-bold">
+                                                    Smartphone Prioritas Tertinggi
+                                                </label>
+                                                <div class="col-sm-8 d-flex align-items-center">
+                                                    <span class="form-control-plaintext">
+                                                        {{ $alternatifTeratas->nama_smartphone }}
+                                                        ({{ $alternatifTeratas->kode_produk }})
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3 row">
+                                                <label class="col-sm-4 col-form-label fw-bold">Nilai Preferensi</label>
+                                                <div class="col-sm-8 d-flex align-items-center">
+                                                    <span class="form-control-plaintext">
+                                                        {{ number_format($preferensi[$idTeratas], 4) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
                 </div>
+
 
 
 

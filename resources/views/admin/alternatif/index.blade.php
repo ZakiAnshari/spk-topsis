@@ -25,13 +25,14 @@
                                         <div class="input-group shadow-sm" style="height: 38px; width: 100%;">
                                             <input type="text" name="search" value="{{ request('search') }}"
                                                 class="form-control border-end-0 py-2 px-3" style="font-size: 0.9rem;"
-                                                placeholder="Cari Nama" aria-label="Search">
+                                                placeholder="Cari Nama Smartphone / Kode Produk" aria-label="Search">
                                             <button class="btn btn-outline-primary px-3" type="submit"
                                                 style="font-size: 0.9rem;">
                                                 <i class="bx bx-search"></i>
                                             </button>
                                         </div>
                                     </form>
+
 
                                     <!-- Judul -->
                                     <!-- Tombol Aksi -->
